@@ -1,0 +1,60 @@
+{
+  "name": "de-2027-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ДЭ-2027 — платформа подготовки к демоэкзамену",
+  "author": "DE-2027",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable",
+    "icon": "node tools/make-icon.mjs"
+  },
+  "devDependencies": {
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0",
+    "png-to-ico": "^3.0.2"
+  },
+  "build": {
+    "appId": "ru.de2027.platform",
+    "productName": "DE-2027",
+    "copyright": "DE-2027",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "loading.html",
+      "package.json",
+      "build/icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/DE-2027/app",
+        "to": "app"
+      },
+      {
+        "from": "../dist/DE-2027/runtime/php",
+        "to": "php"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "DE-2027-${version}-portable.exe"
+    },
+    "portable": {
+      "requestExecutionLevel": "user",
+      "artifactName": "DE-2027-${version}-portable.exe"
+    },
+    "compression": "normal"
+  }
+}
