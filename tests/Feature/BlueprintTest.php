@@ -99,7 +99,7 @@ class BlueprintTest extends TestCase
 
     public function test_unknown_topic_falls_back_to_neutral_wording(): void
     {
-        $data = Blueprint::normalize(['topic' => 'Свадьба']);
+        $data = Blueprint::normalize(['topic' => 'Космический туризм']);
 
         $this->assertSame('услуга', $data['object_singular']);
         $this->assertSame('Заявка принята', $data['status_assigned']);
@@ -107,7 +107,7 @@ class BlueprintTest extends TestCase
         $this->assertStringNotContainsString('мероприят', mb_strtolower($data['purpose']));
 
         $speech = Blueprint::defense($data)['speech'];
-        $this->assertStringContainsString('Свадьба', $speech);
+        $this->assertStringContainsString('Космический туризм', $speech);
         $this->assertStringNotContainsString('конференц', mb_strtolower($speech));
     }
 
@@ -118,6 +118,48 @@ class BlueprintTest extends TestCase
             'Детский лагерь' => 'путёвка',
             'Пункт выдачи заказов' => 'заказ',
             'Тюнинг' => 'автомобиль',
+            'Свадьба' => 'мероприятие',
+            'Банкетный зал' => 'мероприятие',
+            'Аренда дронов' => 'дрон',
+            'Типография' => 'заказ',
+            'Психолог' => 'консультация',
+            'Пекарня' => 'заказ',
+        ];
+
+        foreach ($cases as $topic => $expected) {
+            $this->assertSame($expected, Blueprint::normalize(['topic' => $topic])['object_singular'], $topic);
+        }
+    }
+
+    /**
+     * Короткий ключ не должен срабатывать внутри слова:
+     * «туризм» — не тур, «стол» — не СТО.
+     */
+    public function test_short_keys_do_not_match_inside_words(): void
+    {
+        $tourism = Blueprint::normalize(['topic' => 'Космический туризм']);
+
+        $this->assertSame('услуга', $tourism['object_singular']);
+        $this->assertSame('Заявка принята', $tourism['status_assigned']);
+
+        $this->assertSame('услуга', Blueprint::normalize(['topic' => 'Столовая'])['object_singular']);
+        $this->assertSame('тур', Blueprint::normalize(['topic' => 'Туры выходного дня'])['object_singular']);
+    }
+
+    /**
+     * Длинный ключ важнее короткого, а первое слово темы важнее второго.
+     */
+    public function test_matcher_prefers_specific_key(): void
+    {
+        $cases = [
+            'Ветклиника' => 'питомец',
+            'Фотостудия' => 'фотосессия',
+            'Барбершоп' => 'услуга',
+            'Грузоперевозки' => 'заказ',
+            'Курсы маникюра' => 'курс',
+            'Дрон-съёмка' => 'дрон',
+            'Автошкола' => 'курс',
+            'Спортивный клуб' => 'тренировка',
         ];
 
         foreach ($cases as $topic => $expected) {

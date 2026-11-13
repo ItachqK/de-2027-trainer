@@ -19,6 +19,17 @@ use ZipArchive;
  */
 class Blueprint
 {
+    /**
+     * Падежные окончания, которые можно отбросить от слова при поиске темы.
+     * Нужны, чтобы «пиццу» и «пиццы» попадали в ключ «пицц», а «туризм» — нет.
+     */
+    public const ENDINGS = [
+        '', 'а', 'я', 'ы', 'и', 'е', 'у', 'ю', 'о', 'ь', 'й',
+        'ов', 'ев', 'ам', 'ям', 'ах', 'ях', 'ом', 'ем', 'ой', 'ей',
+        'ою', 'ею', 'ий', 'ый', 'ая', 'ое', 'ые', 'ую', 'юю',
+        'ых', 'их', 'ыми', 'ими', 'ии', 'ия', 'ию', 'ья', 'ье', 'ью', 'ьи',
+    ];
+
     /** Поля, которые можно переопределить в форме. */
     public const FIELDS = [
         'project_name',
@@ -125,7 +136,7 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве ремонта',
             ]],
-            ['keys' => ['автосервис', 'ремонт авто', 'сто ', 'автомастер'], 'data' => [
+            ['keys' => ['автосервис', 'ремонт авто', 'сто', 'автомастер', 'автосалон', 'автомойк', 'шиномонтаж'], 'data' => [
                 'purpose' => 'записи автомобилей в сервисный центр',
                 'object_singular' => 'автомобиль',
                 'object_plural' => 'автомобили',
@@ -151,7 +162,7 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве приёма',
             ]],
-            ['keys' => ['фитнес', 'спортзал', 'тренировк', 'йог', 'бассейн'], 'data' => [
+            ['keys' => ['фитнес', 'спортзал', 'тренировк', 'йог', 'бассейн', 'спорт'], 'data' => [
                 'purpose' => 'записи на тренировки в фитнес-клуб',
                 'object_singular' => 'тренировка',
                 'object_plural' => 'тренировки',
@@ -190,7 +201,7 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о проживании',
             ]],
-            ['keys' => ['курс', 'обучен', 'школ', 'репетитор', 'урок'], 'data' => [
+            ['keys' => ['курс', 'обучен', 'школ', 'репетитор', 'урок', 'автошкол', 'вождени'], 'data' => [
                 'purpose' => 'записи на учебные курсы',
                 'object_singular' => 'курс',
                 'object_plural' => 'курсы',
@@ -242,7 +253,7 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве ремонта',
             ]],
-            ['keys' => ['животн', 'приют', 'ветеринар', 'зоо', 'питом'], 'data' => [
+            ['keys' => ['животн', 'приют', 'ветеринар', 'зоо', 'питом', 'ветклиник', 'зоомагазин', 'зоогостин', 'зоопарк', 'груминг'], 'data' => [
                 'purpose' => 'записи животных в ветеринарную клинику',
                 'object_singular' => 'питомец',
                 'object_plural' => 'питомцы',
@@ -294,7 +305,7 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве букета',
             ]],
-            ['keys' => ['тур', 'экскурс', 'путешеств'], 'data' => [
+            ['keys' => ['тур', 'экскурс', 'путешеств', 'турагентств'], 'data' => [
                 'purpose' => 'бронирования туров и экскурсий',
                 'object_singular' => 'тур',
                 'object_plural' => 'туры',
@@ -424,6 +435,71 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве работ',
             ]],
+            ['keys' => ['свадьб', 'банкет', 'праздник', 'юбилей', 'торжеств'], 'data' => [
+                'purpose' => 'организации свадеб и праздников',
+                'object_singular' => 'мероприятие',
+                'object_plural' => 'мероприятия',
+                'object_options' => 'свадьба, банкет, корпоратив',
+                'date_label' => 'дата мероприятия',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Мероприятие назначено',
+                'status_done' => 'Завершено',
+                'pay_1' => 'при бронировании',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о проведённом мероприятии',
+            ]],
+            ['keys' => ['дрон', 'квадрокоптер', 'аэросъёмк', 'аэросъемк'], 'data' => [
+                'purpose' => 'бронирования дронов и аэросъёмки',
+                'object_singular' => 'дрон',
+                'object_plural' => 'дроны',
+                'object_options' => 'лёгкий, профессиональный, с оператором',
+                'date_label' => 'дата съёмки',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Вылет назначен',
+                'status_done' => 'Съёмка выполнена',
+                'pay_1' => 'при получении',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о качестве съёмки',
+            ]],
+            ['keys' => ['типограф', 'печат', 'полиграф', 'копицентр'], 'data' => [
+                'purpose' => 'приёма заказов на печать',
+                'object_singular' => 'заказ',
+                'object_plural' => 'заказы',
+                'object_options' => 'визитки, буклеты, баннер',
+                'date_label' => 'дата готовности',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Заказ в работе',
+                'status_done' => 'Готово',
+                'pay_1' => 'при получении',
+                'pay_2' => 'по счёту',
+                'review_text' => 'отзыв о качестве печати',
+            ]],
+            ['keys' => ['психолог', 'психотерап', 'консультац'], 'data' => [
+                'purpose' => 'записи на консультации психолога',
+                'object_singular' => 'консультация',
+                'object_plural' => 'консультации',
+                'object_options' => 'первичная, повторная, парная',
+                'date_label' => 'дата консультации',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Встреча назначена',
+                'status_done' => 'Завершено',
+                'pay_1' => 'при встрече',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о качестве консультации',
+            ]],
+            ['keys' => ['пекарн', 'кондитер', 'выпечк', 'торт'], 'data' => [
+                'purpose' => 'приёма заказов на выпечку',
+                'object_singular' => 'заказ',
+                'object_plural' => 'заказы',
+                'object_options' => 'торт, пирог, набор пирожных',
+                'date_label' => 'дата получения',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Заказ принят',
+                'status_done' => 'Готово',
+                'pay_1' => 'при получении',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о качестве выпечки',
+            ]],
         ];
     }
 
@@ -470,23 +546,7 @@ class Blueprint
             return self::defaults();
         }
 
-        $data = self::defaults();
-        $haystack = mb_strtolower($topic);
-        $matched = false;
-
-        foreach (self::presets() as $preset) {
-            foreach ($preset['keys'] as $needle) {
-                if (str_contains($haystack, $needle)) {
-                    $data = array_merge($data, $preset['data']);
-                    $matched = true;
-                    break 2;
-                }
-            }
-        }
-
-        if (! $matched) {
-            $data = array_merge($data, self::neutral());
-        }
+        $data = array_merge(self::defaults(), self::match($topic) ?? self::neutral());
 
         $data['topic'] = $topic;
         $data['project_name'] = $topic;
@@ -494,6 +554,75 @@ class Blueprint
         $data['slug'] = Str::slug($topic) ?: 'project';
 
         return $data;
+    }
+
+    /**
+     * Ищет самый точный пресет: длинный ключ важнее короткого.
+     *
+     * Короткие ключи (до 4 букв) срабатывают только с начала слова и только
+     * с падежным окончанием — иначе «туризм» превращается в тур, а «стол» в СТО.
+     * Длинные ключи ищутся и внутри слова: «ветклиника» → клиника.
+     */
+    public static function match(string $topic): ?array
+    {
+        $haystack = mb_strtolower(trim($topic));
+
+        if ($haystack === '') {
+            return null;
+        }
+
+        $words = preg_split('/[^\p{L}\p{N}]+/u', $haystack, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $best = null;
+        $bestScore = 0;
+
+        foreach (self::presets() as $preset) {
+            foreach ($preset['keys'] as $key) {
+                $key = mb_strtolower(trim($key));
+                $index = $key === '' ? null : self::keyHits($key, $words, $haystack);
+
+                if ($index === null) {
+                    continue;
+                }
+
+                // Первое слово темы важнее: «Курсы маникюра» — это обучение, а не салон.
+                $score = mb_strlen($key) + ($index === 0 ? 3 : 0);
+
+                if ($score > $bestScore) {
+                    $bestScore = $score;
+                    $best = $preset['data'];
+                }
+            }
+        }
+
+        return $best;
+    }
+
+    private static function keyHits(string $key, array $words, string $haystack): ?int
+    {
+        $length = mb_strlen($key);
+
+        foreach ($words as $index => $word) {
+            if (! str_starts_with($word, $key)) {
+                continue;
+            }
+
+            if ($length >= 4 || in_array(mb_substr($word, $length), self::ENDINGS, true)) {
+                return $index;
+            }
+        }
+
+        if ($length < 5) {
+            return null;
+        }
+
+        foreach ($words as $index => $word) {
+            if (str_contains($word, $key)) {
+                return $index;
+            }
+        }
+
+        // Ключ из двух слов: «ремонт квартир», «пункт выдачи».
+        return str_contains($haystack, $key) ? 0 : null;
     }
 
     /** Убирает символы, которые могут сломать PHP, Blade или SQL. */
