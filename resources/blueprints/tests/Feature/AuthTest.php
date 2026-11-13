@@ -103,4 +103,24 @@ class AuthTest extends TestCase
 
         $this->actingAs($admin)->get('/admin/bookings')->assertOk()->assertSee('Заявки пользователей');
     }
+
+    /** Админ после входа попадает в админку, а не в свой пустой список заявок. */
+    public function test_admin_login_lands_on_admin_panel(): void
+    {
+        User::create([
+            'fio' => 'Администратор портала',
+            'login' => 'admin2027',
+            'phone' => '8(343)200-18-14',
+            'email' => 'admin@example.ru',
+            'password' => 'Admin2027!',
+            'role' => 'admin',
+        ]);
+
+        $this->post('/login', [
+            'login' => 'admin2027',
+            'password' => 'Admin2027!',
+        ])->assertRedirect(route('admin.bookings.index'));
+
+        $this->assertAuthenticated();
+    }
 }

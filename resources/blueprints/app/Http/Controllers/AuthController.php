@@ -90,7 +90,12 @@ class AuthController extends Controller
         RateLimiter::clear($key);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('bookings.index'));
+        // Администратору нужна админка, а не пустой список своих заявок.
+        $home = $request->user()->isAdmin()
+            ? route('admin.bookings.index')
+            : route('bookings.index');
+
+        return redirect()->intended($home);
     }
 
     public function logout(Request $request)

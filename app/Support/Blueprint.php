@@ -893,26 +893,27 @@ class Blueprint
                     'Copy-Item .env.example .env',
                     'php artisan key:generate',
                     'New-Item database\database.sqlite -ItemType File -Force',
+                    'php artisan migrate',
                     'php artisan serve',
                 ],
                 ['.env.example'],
                 [
-                    'http://127.0.0.1:8000 открывается без ошибок.',
+                    'http://127.0.0.1:8000 открывается без ошибок — видна приветственная страница Laravel.',
                     'В .env есть APP_KEY (не пустой).',
-                    'Файл database/database.sqlite существует и не пустой после миграций.',
+                    'Файл database/database.sqlite существует и не пустой: миграции уже прошли.',
                 ],
                 [
                     'Забыли php artisan key:generate — Laravel падает с «No application encryption key».',
                     'Не создали database.sqlite — миграция пишет «Database file does not exist».',
-                    'Запускают serve из чужой папки — artisan не находит bootstrap/app.php.',
+                    'Пропустили php artisan migrate — главная отдаёт 500 «no such table: sessions»: сессии хранятся в базе.',
                 ],
                 $files
             ),
             self::chapter(2, 'База данных: три таблицы', 25,
-                'Создать users, bookings и reviews. Внешние ключи, enum для статусов и оплаты, unique на отзыв.',
+                'Создать users, bookings и reviews. Внешние ключи, enum для статусов и оплаты, unique на отзыв. Схема users своя, поэтому базу пересоберём с нуля.',
                 [
                     'Создайте файлы миграций из списка ниже — код каждой в этой главе.',
-                    'php artisan migrate',
+                    'php artisan migrate:fresh   # схема users изменилась, базу собираем заново',
                     'php artisan migrate:status',
                     'php artisan db:show',
                 ],
@@ -924,7 +925,7 @@ class Blueprint
                     'database/migrations/2026_01_01_000002_create_reviews_table.php',
                 ],
                 [
-                    'migrate:status показывает три миграции со статусом Ran.',
+                    'migrate:status показывает пять миграций, у всех статус Ran.',
                     'В bookings есть внешний ключ user_id → users.id.',
                     'В reviews поле booking_id помечено unique — второй отзыв по заявке не пройдёт.',
                 ],
@@ -1106,7 +1107,7 @@ class Blueprint
                 $files
             ),
             self::chapter(10, 'Тестовые данные и тесты', 15,
-                'Сиды с администратором и демо-заявками, 13 тестов на ключевые правила.',
+                'Сиды с администратором и демо-заявками, 15 тестов на ключевые правила.',
                 [
                     'php artisan migrate:fresh --seed',
                     'php artisan test',
@@ -1117,6 +1118,7 @@ class Blueprint
                     'database/seeders/BookingSeeder.php',
                     'tests/Feature/AuthTest.php',
                     'tests/Feature/BookingTest.php',
+                    'tests/Feature/ExampleTest.php',
                     'tests/Unit/ExampleTest.php',
                 ],
                 [
