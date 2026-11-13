@@ -199,6 +199,31 @@ class BlueprintTest extends TestCase
         $this->assertStringContainsString('двухкомнатная', $rent['object_options']);
     }
 
+    public function test_presets_cover_boats_laundry_and_car_wash(): void
+    {
+        $cases = [
+            'Прокат лодок' => 'лодка',
+            'Аренда катера' => 'лодка',
+            'Химчистка' => 'вещь',
+            'Прачечная' => 'вещь',
+            'Автомойка' => 'автомобиль',
+        ];
+
+        foreach ($cases as $topic => $expected) {
+            $this->assertSame($expected, Blueprint::normalize(['topic' => $topic])['object_singular'], $topic);
+        }
+
+        // Химчистка одежды и уборка помещений — разные объекты.
+        $this->assertSame('объект', Blueprint::normalize(['topic' => 'Химчистка мебели'])['object_singular']);
+    }
+
+    /** Ключ из двух слов совпадает и тогда, когда слова стоят в другом падеже. */
+    public function test_two_word_keys_match_with_endings(): void
+    {
+        $this->assertSame('объект', Blueprint::normalize(['topic' => 'Ремонт квартиры'])['object_singular']);
+        $this->assertSame('автомобиль', Blueprint::normalize(['topic' => 'Аренда автомобиля'])['object_singular']);
+    }
+
     public function test_result_redirects_without_session(): void
     {
         $user = User::factory()->create();

@@ -144,7 +144,7 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве ремонта',
             ]],
-            ['keys' => ['автосервис', 'ремонт авто', 'сто', 'автомастер', 'автосалон', 'автомойк', 'шиномонтаж'], 'data' => [
+            ['keys' => ['автосервис', 'ремонт авто', 'сто', 'автомастер', 'автосалон', 'шиномонтаж'], 'data' => [
                 'purpose' => 'записи автомобилей в сервисный центр',
                 'object_singular' => 'автомобиль',
                 'object_plural' => 'автомобили',
@@ -156,6 +156,19 @@ class Blueprint
                 'pay_1' => 'при получении',
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве ремонта',
+            ]],
+            ['keys' => ['автомойк', 'мойка авто', 'мойк авто', 'химчистка салона'], 'data' => [
+                'purpose' => 'записи автомобилей на мойку и химчистку салона',
+                'object_singular' => 'автомобиль',
+                'object_plural' => 'автомобили',
+                'object_options' => 'седан, кроссовер, внедорожник',
+                'date_label' => 'дата мойки',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Мойка назначена',
+                'status_done' => 'Выполнено',
+                'pay_1' => 'на месте',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о качестве мойки',
             ]],
             ['keys' => ['стоматолог', 'клиник', 'медцентр', 'врач', 'поликлиник'], 'data' => [
                 'purpose' => 'записи пациентов на приём в клинику',
@@ -378,7 +391,7 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве ремонта',
             ]],
-            ['keys' => ['клининг', 'уборк', 'химчистк'], 'data' => [
+            ['keys' => ['клининг', 'уборк', 'химчистк мебел'], 'data' => [
                 'purpose' => 'заказа клининговых услуг',
                 'object_singular' => 'объект',
                 'object_plural' => 'объекты',
@@ -390,6 +403,19 @@ class Blueprint
                 'pay_1' => 'при выполнении',
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве уборки',
+            ]],
+            ['keys' => ['химчистк', 'чистк одежд', 'прачечн', 'стирк'], 'data' => [
+                'purpose' => 'приёма вещей в химчистку и прачечную',
+                'object_singular' => 'вещь',
+                'object_plural' => 'вещи',
+                'object_options' => 'куртка, пальто, ковёр',
+                'date_label' => 'дата готовности',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Принято в работу',
+                'status_done' => 'Готово',
+                'pay_1' => 'при получении',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о качестве чистки',
             ]],
             ['keys' => ['прокат', 'самокат', 'велосипед', 'сноряж', 'инвентар'], 'data' => [
                 'purpose' => 'выдачи транспорта и снаряжения в прокат',
@@ -403,6 +429,19 @@ class Blueprint
                 'pay_1' => 'при получении',
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о состоянии снаряжения',
+            ]],
+            ['keys' => ['лодк', 'лодо', 'катер', 'каяк', 'сапборд', 'sup', 'яхт'], 'data' => [
+                'purpose' => 'проката лодок, катеров и водного снаряжения',
+                'object_singular' => 'лодка',
+                'object_plural' => 'лодки',
+                'object_options' => 'весельная лодка, моторный катер, каяк',
+                'date_label' => 'дата прогулки',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Прокат подтверждён',
+                'status_done' => 'Возвращено',
+                'pay_1' => 'на причале',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о состоянии лодки',
             ]],
             ['keys' => ['лагер', 'путёвк', 'путевк', 'смен'], 'data' => [
                 'purpose' => 'бронирования путёвок в детский лагерь',
@@ -592,7 +631,7 @@ class Blueprint
                     continue;
                 }
 
-                $index = $key === '' ? null : self::keyHits($key, $words, $haystack);
+                $index = $key === '' ? null : self::keyHits($key, $words);
 
                 if ($index === null) {
                     continue;
@@ -611,8 +650,21 @@ class Blueprint
         return $best;
     }
 
-    private static function keyHits(string $key, array $words, string $haystack): ?int
+    private static function keyHits(string $key, array $words): ?int
     {
+        // Ключ из двух слов: «ремонт квартир», «химчистка мебели».
+        // Слова проверяем по отдельности, иначе «химчистка мебели» не совпадёт
+        // с ключом «химчистк мебел» из-за падежных окончаний.
+        if (str_contains($key, ' ')) {
+            foreach (preg_split('/\s+/u', $key) ?: [] as $part) {
+                if (! self::hasWord($part, $words)) {
+                    return null;
+                }
+            }
+
+            return 0;
+        }
+
         $length = mb_strlen($key);
 
         foreach ($words as $index => $word) {
@@ -635,8 +687,25 @@ class Blueprint
             }
         }
 
-        // Ключ из двух слов: «ремонт квартир», «пункт выдачи».
-        return str_contains($haystack, $key) ? 0 : null;
+        return null;
+    }
+
+    /** Есть ли в теме слово, которое начинается с этой части ключа. */
+    private static function hasWord(string $part, array $words): bool
+    {
+        $length = mb_strlen($part);
+
+        foreach ($words as $word) {
+            if (! str_starts_with($word, $part)) {
+                continue;
+            }
+
+            if ($length >= 4 || in_array(mb_substr($word, $length), self::ENDINGS, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Убирает символы, которые могут сломать PHP, Blade или SQL. */
