@@ -343,7 +343,7 @@ class Blueprint
                 'purpose' => 'подбора и аренды жилья',
                 'object_singular' => 'квартира',
                 'object_plural' => 'квартиры',
-                'object_options' => 'студия, одно комнатная, двух комнатная',
+                'object_options' => 'студия, однокомнатная, двухкомнатная',
                 'date_label' => 'дата просмотра',
                 'status_new' => 'Новая',
                 'status_assigned' => 'Просмотр назначен',

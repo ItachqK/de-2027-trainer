@@ -190,6 +190,15 @@ class BlueprintTest extends TestCase
         $this->assertSame('услуга', Blueprint::normalize(['topic' => 'Доставка воды'])['object_singular']);
     }
 
+    /** Варианты объекта попадают прямо в интерфейс и в речь на защите. */
+    public function test_object_options_are_written_without_breaks(): void
+    {
+        $rent = Blueprint::normalize(['topic' => 'Аренда квартир']);
+
+        $this->assertStringContainsString('однокомнатная', $rent['object_options']);
+        $this->assertStringContainsString('двухкомнатная', $rent['object_options']);
+    }
+
     public function test_result_redirects_without_session(): void
     {
         $user = User::factory()->create();
