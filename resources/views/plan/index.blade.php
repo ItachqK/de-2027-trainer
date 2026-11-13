@@ -3,9 +3,10 @@
 @section('title', 'План на сегодня')
 
 @section('content')
+  @php($hours = rtrim(rtrim(number_format($plan['hoursPerWeek'], 1, ',', ''), '0'), ','))
   <section class="drill-hero">
     <div>
-      <span class="kicker">подготовка · {{ $plan['daysLeft'] }} дней до экзамена · {{ rtrim(rtrim(number_format($plan['hoursPerWeek'], 1, ',', ''), '0'), ',') }} ч в неделю</span>
+      <span class="kicker">подготовка · {{ $plan['daysLeft'] }} дней до экзамена · {{ $hours }} ч в неделю</span>
       <h1>План на сегодня</h1>
       <p class="lead">
         Одно число — насколько вы готовы, одно главное дело — что делать сейчас.
@@ -76,14 +77,14 @@
     </div>
 
     @if (empty($plan['tasks']))
-      <p class="lead">Все три блока закрыты. Осталось повторить защиту и прогнать экзамен ещё раз.</p>
+      <p class="lead">Все четыре блока закрыты. Осталось повторить защиту и прогнать экзамен ещё раз.</p>
     @endif
   </section>
 
   <section class="drill-group">
     <div class="drill-group-head">
       <h2>План на 15 недель</h2>
-      <span>2–3 часа в неделю</span>
+      <span>{{ $hours }} ч в неделю</span>
     </div>
 
     <div class="drill-list">
@@ -110,7 +111,7 @@
 
   <div class="lab-note">
     <strong>Почему так мало в неделю.</strong>
-    В курсе около 30 часов практики и два полных прогона экзамена. При 2–3 часах
+    В курсе около 30 часов практики и два полных прогона экзамена. При {{ $hours }} ч
     в неделю это 15 недель. Если время появится — не ускоряйте теорию, лучше
     добавьте ещё один вариант тренажёра или второй прогон.
   </div>

@@ -46,8 +46,9 @@ class PlanBuilder
         ));
 
         $weakest = collect($blocks)->sortBy('percent')->first();
-        $examDate = Carbon::parse(config('exam.date'))->locale('ru');
-        $daysLeft = max(0, (int) ceil(now()->startOfDay()->diffInDays($examDate->copy()->startOfDay())));
+        $examDate = $this->examDate();
+        $today = $this->today();
+        $daysLeft = max(0, (int) round($today->diffInDays($examDate)));
 
         $tasks = $this->tasks($user, $doneLessons, $weakest['key']);
 
@@ -57,11 +58,23 @@ class PlanBuilder
             'weakest' => $readiness >= 100 ? null : $weakest,
             'tasks' => $tasks,
             'primaryMinutes' => collect($tasks)->where('primary', true)->sum('minutes'),
-            'weeks' => $this->weeks($daysLeft),
+            'weeks' => $this->weeks($today, $examDate),
             'daysLeft' => $daysLeft,
             'examDate' => $examDate,
             'hoursPerWeek' => (float) config('exam.hours_per_week'),
         ];
+    }
+
+    /** Дата экзамена по Москве: иначе в UTC она сдвигается на предыдущий день. */
+    private function examDate(): Carbon
+    {
+        return Carbon::parse(config('exam.date'), 'Europe/Moscow')->startOfDay()->locale('ru');
+    }
+
+    /** Сегодняшний день тоже по Москве — чтобы «дней до экзамена» менялось в полночь, а не в 03:00. */
+    private function today(): Carbon
+    {
+        return Carbon::now('Europe/Moscow')->startOfDay();
     }
 
     private function doneLessons(User $user): array
@@ -83,17 +96,23 @@ class PlanBuilder
 
     private function drillsBlock(User $user): array
     {
-        $total = Drill::where('is_published', true)->count();
-        $solved = DrillProgress::where('user_id', $user->id)->where('passes', '>', 0)->count();
+        $published = Drill::where('is_published', true)->pluck('id')->all();
+        $total = count($published);
+        $solved = DrillProgress::where('user_id', $user->id)
+            ->where('passes', '>', 0)
+            ->whereIn('drill_id', $published)
+            ->count();
 
         return $this->block('drills', 'Тренажёр', $solved, $total, route('drills.index'), 'Варианты тренируют руки: карточки, формы, SQL и Laravel-фрагменты.');
     }
 
     private function labsBlock(User $user): array
     {
-        $total = Lab::where('is_published', true)->count();
+        $published = Lab::where('is_published', true)->pluck('id')->all();
+        $total = count($published);
         $passed = LabSubmission::where('user_id', $user->id)
             ->where('status', 'passed')
+            ->whereIn('lab_id', $published)
             ->distinct()
             ->count('lab_id');
 
@@ -103,10 +122,14 @@ class PlanBuilder
     private function examBlock(User $user): array
     {
         $runs = ExamSession::where('user_id', $user->id)->whereNotNull('finished_at')->count();
-        $best = CapstoneSubmission::where('user_id', $user->id)->orderByDesc('score')->first();
-        $auditPercent = $best && $best->max_score > 0
-            ? min(100, (int) round($best->score / $best->max_score * 100))
-            : 0;
+
+        // Лучший аудит — по доле выполненных критериев, а не по сырому баллу.
+        $best = CapstoneSubmission::where('user_id', $user->id)
+            ->get()
+            ->sortByDesc(fn (CapstoneSubmission $item) => $item->percent())
+            ->first();
+
+        $auditPercent = $best ? min(100, $best->percent()) : 0;
 
         $percent = ($runs > 0 ? 50 : 0) + (int) round($auditPercent / 2);
         $done = ($runs > 0 ? 1 : 0) + ($auditPercent > 0 ? 1 : 0);
@@ -117,7 +140,7 @@ class PlanBuilder
             'done' => $done,
             'total' => 2,
             'percent' => min(100, $percent),
-            'url' => route('exam.index'),
+            'url' => $runs > 0 && $auditPercent < 100 ? route('capstone.index') : route('exam.index'),
             'hint' => 'Прогон по таймеру и проверка проекта на 75 баллов — единственный способ узнать, где вы на самом деле.',
             'detail' => $runs > 0
                 ? 'Прогонов: '.$runs.' · аудит: '.$auditPercent.'%'
@@ -141,6 +164,8 @@ class PlanBuilder
 
     /**
      * Три дела: главное — из самого слабого блока, остальные — по порядку.
+     * Аудит проекта идёт отдельной задачей: без него блок «Экзамен и аудит»
+     * не закрыть, даже если прогон по таймеру уже сделан.
      */
     private function tasks(User $user, array $done, string $weakest): array
     {
@@ -149,25 +174,34 @@ class PlanBuilder
             $this->drillTask($user),
             $this->labTask($user),
             $this->examTask($user),
+            $this->auditTask($user),
         ]));
 
-        $order = ['lessons' => 0, 'drills' => 1, 'labs' => 2, 'exam' => 3];
-        $weakestIndex = $order[$weakest] ?? 0;
-
-        usort($tasks, function (array $a, array $b) use ($order, $weakestIndex) {
-            $aRank = $order[$a['block']] === $weakestIndex ? -1 : $order[$a['block']];
-            $bRank = $order[$b['block']] === $weakestIndex ? -1 : $order[$b['block']];
+        usort($tasks, function (array $a, array $b) use ($weakest) {
+            $aRank = $a['block'] === $weakest ? -1 : $a['order'];
+            $bRank = $b['block'] === $weakest ? -1 : $b['order'];
 
             return $aRank <=> $bRank;
         });
 
-        $tasks = array_slice($tasks, 0, 3);
+        $top = array_slice($tasks, 0, 3);
 
-        foreach ($tasks as $index => $task) {
-            $tasks[$index]['primary'] = $index === 0;
+        // Если прогон по таймеру уже был, аудит обязателен: без него блок
+        // «Экзамен и аудит» не закрыть. Меняем последнее дело на аудит.
+        $hasRun = ExamSession::where('user_id', $user->id)->whereNotNull('finished_at')->exists();
+        $hasAudit = collect($top)->contains(fn (array $task) => $task['kind'] === 'аудит');
+        if ($hasRun && ! $hasAudit) {
+            $audit = collect($tasks)->firstWhere('kind', 'аудит');
+            if ($audit) {
+                $top[2] = $audit;
+            }
         }
 
-        return $tasks;
+        foreach ($top as $index => $task) {
+            $top[$index]['primary'] = $index === 0;
+        }
+
+        return array_values($top);
     }
 
     private function lessonTask(array $done): ?array
@@ -184,6 +218,7 @@ class PlanBuilder
 
         return [
             'block' => 'lessons',
+            'order' => 10,
             'kind' => 'урок',
             'title' => $lesson->title,
             'meta' => 'Модуль '.(optional($lesson->module)->num ?? '—').' · '.$lesson->minutes.' мин',
@@ -213,8 +248,10 @@ class PlanBuilder
                 ->orderBy('next_review_at')
                 ->first();
 
-            $drill = $due ? Drill::find($due->drill_id) : Drill::where('is_published', true)->orderBy('position')->first();
-            $mode = $due ? 'повтор' : 'слабое место';
+            $drill = $due
+                ? Drill::where('is_published', true)->find($due->drill_id)
+                : Drill::where('is_published', true)->orderBy('position')->first();
+            $mode = $due ? 'повтор' : 'повторить';
         }
 
         if (! $drill) {
@@ -223,6 +260,7 @@ class PlanBuilder
 
         return [
             'block' => 'drills',
+            'order' => 20,
             'kind' => 'вариант',
             'title' => $drill->title,
             'meta' => $drill->trackLabel().' · '.$drill->minutes.' мин · '.$mode,
@@ -249,6 +287,7 @@ class PlanBuilder
 
         return [
             'block' => 'labs',
+            'order' => 30,
             'kind' => 'лабораторная',
             'title' => $lab->title,
             'meta' => $lab->level.' · '.$lab->minutes.' мин',
@@ -267,6 +306,7 @@ class PlanBuilder
 
         return [
             'block' => 'exam',
+            'order' => 40,
             'kind' => 'экзамен',
             'title' => 'Прогон по таймеру 3:30',
             'meta' => 'Когда теория и сборка закрыты · 210 мин',
@@ -275,11 +315,36 @@ class PlanBuilder
         ];
     }
 
+    /** Аудит проекта — вторая половина блока «Экзамен и аудит». */
+    private function auditTask(User $user): ?array
+    {
+        $best = CapstoneSubmission::where('user_id', $user->id)
+            ->get()
+            ->sortByDesc(fn (CapstoneSubmission $item) => $item->percent())
+            ->first();
+
+        if ($best && $best->percent() >= 100) {
+            return null;
+        }
+
+        return [
+            'block' => 'exam',
+            'order' => 45,
+            'kind' => 'аудит',
+            'title' => 'Проверить проект по 75-балльной шкале',
+            'meta' => $best
+                ? 'Лучший результат: '.$best->percent().'% · добрать до 100%'
+                : 'Папка или репозиторий · 20 мин',
+            'minutes' => 20,
+            'url' => route('capstone.index'),
+        ];
+    }
+
     /**
      * План на 15 недель: 2–3 часа в неделю — это около 30 часов практики
      * плюс два прогона экзамена. Теория сжимается, практика — нет.
      */
-    private function weeks(int $daysLeft): Collection
+    private function weeks(Carbon $today, Carbon $examDate): Collection
     {
         $plan = [
             ['Терминал и файлы', 'Модуль 00: команды, пути, установка PHP и Composer.'],
@@ -300,12 +365,9 @@ class PlanBuilder
         ];
 
         $total = count($plan);
-        $weeksLeft = max(1, (int) ceil($daysLeft / 7));
-        $current = min($total, max(1, $total - $weeksLeft + 1));
-        $today = now()->startOfDay();
-        $examWeekStart = Carbon::parse(config('exam.date'))->startOfWeek(Carbon::MONDAY);
+        $examWeekStart = $examDate->copy()->startOfWeek(Carbon::MONDAY);
 
-        return collect($plan)->map(function (array $row, int $index) use ($total, $current, $today, $examWeekStart) {
+        return collect($plan)->map(function (array $row, int $index) use ($total, $today, $examWeekStart) {
             $num = $index + 1;
             $start = $examWeekStart->copy()->subWeeks($total - $num);
             $end = $start->copy()->addDays(6);
@@ -315,7 +377,11 @@ class PlanBuilder
                 $start = $today->copy();
             }
 
-            $state = $num === $current ? 'current' : ($end->lt($today) ? 'past' : 'future');
+            // Состояние — по окну недели: в последний день недели она ещё «сейчас»,
+            // а не «впереди».
+            $state = $start->lte($today) && $end->gte($today)
+                ? 'current'
+                : ($end->lt($today) ? 'past' : 'future');
 
             return [
                 'num' => $num,
