@@ -2091,7 +2091,7 @@ table.data code { font-size: 12.5px; }
 }
 .workshop-top .brand-text span { color: #9ba09c; }
 .workshop-nav { display: flex; align-items: center; gap: 18px; margin-left: auto; }
-.workshop-nav a { color: #c8ccc7; text-decoration: none; font-size: 13px; }
+.workshop-nav a { color: #c8ccc7; text-decoration: none; font-size: 13px; white-space: nowrap; }
 .workshop-nav a:hover, .workshop-nav a.is-active { color: #fff; }
 .workshop-user { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #9ba09c; }
 .workshop-user form { margin: 0; }
@@ -3506,4 +3506,47 @@ table.data code { font-size: 12.5px; }
 @media (max-width: 720px) {
   .bp-two { grid-template-columns: 1fr; gap: 14px; }
   .bp-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* План подготовки: недели и текущая неделя */
+.plan-week-detail { display: block; margin-top: 3px; font-size: 12px; font-weight: 400; color: var(--muted); line-height: 1.5; }
+.plan-week.is-current { background: var(--surface-2); border-left: 3px solid var(--accent); padding-left: 10px; }
+
+/* План: четыре блока готовности вместо шести дорожек тренажёра */
+.plan-blocks { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 900px) {
+  .plan-blocks { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* На узких экранах меню практикума — одна строка с прокруткой, а не три ряда */
+@media (max-width: 720px) {
+  .workshop-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 18px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .workshop-nav::-webkit-scrollbar { display: none; }
+  .workshop-nav a { white-space: nowrap; }
+}
+
+/* Пока все пункты не влезают в строку, меню уходит на свою строку и скроллится */
+@media (min-width: 721px) and (max-width: 1360px) {
+  .workshop-top { flex-wrap: wrap; gap: 10px 16px; }
+  .workshop-nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 18px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .workshop-nav::-webkit-scrollbar { display: none; }
+  .workshop-user { margin-left: auto; }
 }

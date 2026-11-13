@@ -20,6 +20,7 @@
     </a>
 
     <nav class="workshop-nav" aria-label="Практикум">
+      <a href="{{ route('plan.index') }}" class="{{ request()->routeIs('plan.*') ? 'is-active' : '' }}">План</a>
       <a href="{{ route('drills.index') }}" class="{{ request()->routeIs('drills.*') ? 'is-active' : '' }}">Тренажёр</a>
       <a href="{{ route('variants.index') }}" class="{{ request()->routeIs('variants.*') ? 'is-active' : '' }}">Варианты ТЗ</a>
       <a href="{{ route('topic.index') }}" class="{{ request()->routeIs('topic.*') ? 'is-active' : '' }}">Своя тема</a>

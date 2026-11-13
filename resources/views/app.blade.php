@@ -40,12 +40,16 @@
       <div class="exam-countdown" id="examCountdown" aria-label="Обратный отсчёт до экзамена">
         <span class="exam-countdown-label">До экзамена</span>
         <strong id="examCountdownValue">—</strong>
-        <small>28 февраля 2027</small>
+        <small>{{ \Illuminate\Support\Carbon::parse(config('exam.date'))->locale('ru')->translatedFormat('j F Y') }}</small>
       </div>
 
       <nav class="rail-nav" id="railNav"></nav>
 
       <div class="rail-tools">
+        <a href="{{ route('plan.index') }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+          План на сегодня
+        </a>
         <a href="{{ route('labs.index') }}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6a4 4 0 0 1-5.6 5.6L4 16l4 4 4.4-4.4A4 4 0 0 0 18 10z"/><path d="M15 3l6 6"/></svg>
           Практикум
@@ -186,7 +190,7 @@
     (function () {
       var value = document.getElementById('examCountdownValue');
       if (!value) return;
-      var target = new Date('2027-02-28T00:00:00+05:00').getTime();
+      var target = new Date('{{ config('exam.date') }}T00:00:00+03:00').getTime();
       var pad = function (n) { return String(n).padStart(2, '0'); };
 
       function updateCountdown() {

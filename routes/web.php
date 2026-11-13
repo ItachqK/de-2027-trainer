@@ -11,6 +11,7 @@ use App\Http\Controllers\CaseStudyController;
 use App\Http\Controllers\DrillController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\LabController;
+use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\VariantController;
@@ -22,6 +23,8 @@ Route::get('/api/course', [ApiController::class, 'course'])->name('api.course');
 Route::middleware('auth')->group(function () {
     Route::get('/api/state', [ApiController::class, 'state'])->name('api.state');
     Route::post('/api/state', [ApiController::class, 'saveState'])->name('api.state.save');
+
+    Route::get('/plan', [PlanController::class, 'index'])->name('plan.index');
 
     Route::get('/labs', [LabController::class, 'index'])->name('labs.index');
     Route::get('/labs/{lab:slug}', [LabController::class, 'show'])->name('labs.show');
