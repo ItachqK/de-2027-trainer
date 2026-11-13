@@ -64,6 +64,12 @@ class Blueprint
      * Словарь тем. Ключи — подстроки в нижнем регистре.
      * Первое совпадение выигрывает, поэтому узкие темы стоят выше общих.
      */
+    /** Словарь тем нужен и веб-версии генератора (docs/). */
+    public static function dictionary(): array
+    {
+        return self::presets();
+    }
+
     private static function presets(): array
     {
         return [
@@ -578,7 +584,7 @@ class Blueprint
             }
         }
 
-        return compact('n', 'title', 'minutes', 'goal', 'commands', 'code', 'checks', 'mistakes');
+        return compact('n', 'title', 'minutes', 'goal', 'commands', 'paths', 'code', 'checks', 'mistakes');
     }
 
     public static function chapters(array $data, array $files): array
@@ -967,7 +973,7 @@ class Blueprint
         $out .= '- Объект заявки: «'.$d['object_singular'].'» — '.$d['object_options'].'.'."\n";
         $out .= '- Статусы: «'.$d['status_new'].'» → «'.$d['status_assigned'].'» → «'.$d['status_done'].'».'."\n";
         $out .= '- Оплата: '.$d['pay_1'].' / '.$d['pay_2'].'.'."\n";
-        $out .= '- Отзыв: '.$d['review_text'].', один раз после завершения.'."\n";
+        $out .= '- Что оценивает отзыв: '.$d['review_text'].'.'."\n";
         $out .= '- Администратор: `'.$d['admin_login'].'` / `'.$d['admin_password'].'`.'."\n\n";
 
         foreach ($build['chapters'] as $chapter) {
@@ -1017,8 +1023,8 @@ class Blueprint
         $out .= "## Защита: что сказать\n\n".$build['defense']['speech']."\n\n";
         $out .= "### Демонстрация\n\n";
 
-        foreach ($build['defense']['demo'] as $step) {
-            $out .= '1. '.$step."\n";
+        foreach ($build['defense']['demo'] as $index => $step) {
+            $out .= ($index + 1).'. '.$step."\n";
         }
 
         $out .= "\n### Вопросы и ответы\n\n";
