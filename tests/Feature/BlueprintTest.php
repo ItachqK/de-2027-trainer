@@ -167,6 +167,29 @@ class BlueprintTest extends TestCase
         }
     }
 
+    /**
+     * Слово-действие не должно перетягивать тему в чужую область:
+     * «Доставка суши» — это еда, а не грузоперевозки.
+     */
+    public function test_action_words_do_not_pick_the_domain(): void
+    {
+        $cases = [
+            'Доставка суши' => 'пицца',
+            'Доставка пиццы' => 'пицца',
+            'Доставка цветов' => 'букет',
+            'Выдача книг' => 'книга',
+            'Пункт выдачи заказов' => 'заказ',
+        ];
+
+        foreach ($cases as $topic => $expected) {
+            $this->assertSame($expected, Blueprint::normalize(['topic' => $topic])['object_singular'], $topic);
+        }
+
+        // В теме только слово-действие: нейтральные формулировки честнее,
+        // чем чужая предметная область.
+        $this->assertSame('услуга', Blueprint::normalize(['topic' => 'Доставка воды'])['object_singular']);
+    }
+
     public function test_result_redirects_without_session(): void
     {
         $user = User::factory()->create();
