@@ -97,6 +97,34 @@ class BlueprintTest extends TestCase
         $this->assertStringNotContainsString('@@PROJECT@@', $files['resources/views/layouts/app.blade.php']);
     }
 
+    public function test_unknown_topic_falls_back_to_neutral_wording(): void
+    {
+        $data = Blueprint::normalize(['topic' => 'Свадьба']);
+
+        $this->assertSame('услуга', $data['object_singular']);
+        $this->assertSame('Заявка принята', $data['status_assigned']);
+        $this->assertSame('приёма и обработки заявок клиентов', $data['purpose']);
+        $this->assertStringNotContainsString('мероприят', mb_strtolower($data['purpose']));
+
+        $speech = Blueprint::defense($data)['speech'];
+        $this->assertStringContainsString('Свадьба', $speech);
+        $this->assertStringNotContainsString('конференц', mb_strtolower($speech));
+    }
+
+    public function test_dictionary_covers_common_exam_topics(): void
+    {
+        $cases = [
+            'Прокат самокатов' => 'позиция проката',
+            'Детский лагерь' => 'путёвка',
+            'Пункт выдачи заказов' => 'заказ',
+            'Тюнинг' => 'автомобиль',
+        ];
+
+        foreach ($cases as $topic => $expected) {
+            $this->assertSame($expected, Blueprint::normalize(['topic' => $topic])['object_singular'], $topic);
+        }
+    }
+
     public function test_result_redirects_without_session(): void
     {
         $user = User::factory()->create();

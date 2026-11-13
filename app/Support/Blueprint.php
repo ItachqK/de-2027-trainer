@@ -372,6 +372,79 @@ class Blueprint
                 'pay_2' => 'переводом по СБП',
                 'review_text' => 'отзыв о качестве уборки',
             ]],
+            ['keys' => ['прокат', 'самокат', 'велосипед', 'сноряж', 'инвентар'], 'data' => [
+                'purpose' => 'выдачи транспорта и снаряжения в прокат',
+                'object_singular' => 'позиция проката',
+                'object_plural' => 'позиции проката',
+                'object_options' => 'самокат, велосипед, комплект снаряжения',
+                'date_label' => 'дата начала аренды',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Выдача назначена',
+                'status_done' => 'Возвращено',
+                'pay_1' => 'при получении',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о состоянии снаряжения',
+            ]],
+            ['keys' => ['лагер', 'путёвк', 'путевк', 'смен'], 'data' => [
+                'purpose' => 'бронирования путёвок в детский лагерь',
+                'object_singular' => 'путёвка',
+                'object_plural' => 'путёвки',
+                'object_options' => 'первая смена, вторая смена, дневной лагерь',
+                'date_label' => 'дата заезда',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Путёвка забронирована',
+                'status_done' => 'Завершено',
+                'pay_1' => 'при бронировании',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв об отдыхе',
+            ]],
+            ['keys' => ['выдач', 'пвз', 'пункт выдачи'], 'data' => [
+                'purpose' => 'записи на получение заказов в пункте выдачи',
+                'object_singular' => 'заказ',
+                'object_plural' => 'заказы',
+                'object_options' => 'малый, средний, крупногабаритный',
+                'date_label' => 'дата получения',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Готов к выдаче',
+                'status_done' => 'Выдан',
+                'pay_1' => 'при получении',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о работе пункта выдачи',
+            ]],
+            ['keys' => ['тюнинг', 'детейлинг', 'детейл'], 'data' => [
+                'purpose' => 'записи автомобилей на тюнинг и детейлинг',
+                'object_singular' => 'автомобиль',
+                'object_plural' => 'автомобили',
+                'object_options' => 'эконом, стандарт, премиум',
+                'date_label' => 'дата визита',
+                'status_new' => 'Новая',
+                'status_assigned' => 'Запись подтверждена',
+                'status_done' => 'Работы завершены',
+                'pay_1' => 'при получении',
+                'pay_2' => 'переводом по СБП',
+                'review_text' => 'отзыв о качестве работ',
+            ]],
+        ];
+    }
+
+    /**
+     * Нейтральные формулировки для темы, которой нет в словаре.
+     * Подходят к любой предметной области: услуга, заявка, три статуса.
+     */
+    public static function neutral(): array
+    {
+        return [
+            'purpose' => 'приёма и обработки заявок клиентов',
+            'object_singular' => 'услуга',
+            'object_plural' => 'услуги',
+            'object_options' => 'базовая, расширенная, индивидуальная',
+            'date_label' => 'дата визита',
+            'status_new' => 'Новая',
+            'status_assigned' => 'Заявка принята',
+            'status_done' => 'Завершено',
+            'pay_1' => 'при получении',
+            'pay_2' => 'переводом по СБП',
+            'review_text' => 'отзыв о качестве услуги',
         ];
     }
 
@@ -399,14 +472,20 @@ class Blueprint
 
         $data = self::defaults();
         $haystack = mb_strtolower($topic);
+        $matched = false;
 
         foreach (self::presets() as $preset) {
             foreach ($preset['keys'] as $needle) {
                 if (str_contains($haystack, $needle)) {
                     $data = array_merge($data, $preset['data']);
+                    $matched = true;
                     break 2;
                 }
             }
+        }
+
+        if (! $matched) {
+            $data = array_merge($data, self::neutral());
         }
 
         $data['topic'] = $topic;

@@ -69,6 +69,7 @@ $payload = [
     'fields' => Blueprint::FIELDS,
     'defaults' => Blueprint::defaults(),
     'presets' => Blueprint::dictionary(),
+    'neutral' => Blueprint::neutral(),
     'chapters' => Blueprint::chapters($tokens, []),
     'checklist' => Blueprint::checklist(),
     'defense' => Blueprint::defense($tokens),
