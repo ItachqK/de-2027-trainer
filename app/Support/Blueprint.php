@@ -911,7 +911,7 @@ class Blueprint
             self::chapter(2, 'База данных: три таблицы', 25,
                 'Создать users, bookings и reviews. Внешние ключи, enum для статусов и оплаты, unique на отзыв.',
                 [
-                    '# файлы миграций уже лежат в архиве — просто скопируйте их в database/migrations',
+                    'Создайте файлы миграций из списка ниже — код каждой в этой главе.',
                     'php artisan migrate',
                     'php artisan migrate:status',
                     'php artisan db:show',
